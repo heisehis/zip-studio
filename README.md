@@ -62,3 +62,8 @@ They are not included in this repository.
 - Keep the original files untouched; work on copies.
 - Nothing is published automatically. Posting stays a manual step.
 - An export that passes `qc.sh` has still not been watched or heard. Say so until a person has done both.
+
+## Licence
+
+The code and documentation are under the MIT License (see `LICENSE`). Brand names, logos and any assets you add to the
+example are not covered by it and belong to their owners.
