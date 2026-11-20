@@ -1,0 +1,33 @@
+# Allowlist: only the shareable pipeline, docs and example code are tracked.
+# Projects, brand kits, client material, voices, music, effects, fonts, models and renders never are.
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/pipeline/
+!/docs/
+!/examples/
+
+# inside the example: code and notes only
+/examples/*/inputs/
+/examples/*/previews/
+/examples/*/qc/
+/examples/*/src/render/
+/examples/*/src/comp/assets/
+/examples/*/src/audio/*
+!/examples/*/src/audio/sfx-map.json
+*.mp4
+*.mp3
+*.wav
+*.m4a
+*.ttf
+*.otf
+*.woff*
+*.svg
+*.png
+*.jpg
+*.zip
+*.onnx
+*.bin
+*.log
+.env

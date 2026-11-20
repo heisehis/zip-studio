@@ -1,0 +1,5 @@
+{
+ "whoosh": {"file": "whoosh.mp3", "gain": 0.55, "align": "peak"},
+ "sent":   {"file": "pop-sent.mp3", "gain": 0.9, "align": "onset"},
+ "recv":   {"file": "pop-received.mp3", "gain": 0.8, "align": "onset"}
+}

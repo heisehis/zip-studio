@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Bliz Studio sample promo: compositor</title>
+<!--
+  v4: supermarket story (plan/script.md). Every frame is a pure function of time: window.renderAt(t). No timers, no CSS animations.
+  Pacing and soft text reveals follow a reference reel the studio chose; look follows Bliz Brand Manual v1.1:
+  yellow #FFD500, black #080808, white, charcoal #252525; Montserrat ExtraBold headlines, Poppins text; logo from Final_Master.
+  The supermarket website is invented and carries no name or logo. The chat interface is plain and unbranded.
+-->
+<style>
+@font-face{font-family:Disp;src:url(assets/Montserrat-Variable.ttf);font-weight:100 900}
+@font-face{font-family:Body;src:url(assets/Poppins-Regular.ttf);font-weight:400}
+@font-face{font-family:Body;src:url(assets/Poppins-Medium.ttf);font-weight:500}
+@font-face{font-family:Body;src:url(assets/Poppins-Bold.ttf);font-weight:700}
+:root{--y:#FFD500;--k:#080808;--w:#ffffff;--c:#252525;--grey:#e6e6e6;--mut:#8a8a8a;
+      --sg:#1d6b45;--sg2:#e9f3ec;--so:#ff8a3d;--sc:#fbfaf6}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000}
+#stage{position:absolute;left:0;top:0;width:1080px;height:1920px;overflow:hidden;background:var(--k);font-family:Body;color:var(--w)}
+#dark{position:absolute;inset:0;background:radial-gradient(1000px 900px at 50% 42%,#1c1c1c 0%,var(--k) 72%)}
+#light{position:absolute;inset:0;background:radial-gradient(1100px 1000px at 50% 45%,#f7f7f7 0%,#e9e9e9 80%);opacity:0}
+.center{position:absolute;left:0;width:1080px;text-align:center}
+.card{font:800 92px/1.12 Disp;letter-spacing:-.02em;padding:0 110px}
+#tag{font:500 40px Body;letter-spacing:.32em;color:var(--w)}
+#cta{display:inline-block;font:700 40px Disp;color:var(--k);background:var(--y);padding:24px 54px;border-radius:999px;letter-spacing:.01em}
+#lbl{font:500 38px Body;color:#cfcfcf;letter-spacing:.01em}
+
+/* phone */
+.phone{position:absolute;left:150px;top:230px;width:780px;height:1500px;border-radius:96px;background:var(--k);padding:16px;box-shadow:0 50px 120px rgba(0,0,0,.25)}
+#ph0{box-shadow:0 0 0 2px #333,0 50px 140px rgba(0,0,0,.6)}
+.scr{position:relative;width:100%;height:100%;border-radius:82px;background:#fff;overflow:hidden}
+.sb{position:relative;z-index:3;height:96px;display:flex;align-items:center;justify-content:space-between;padding:22px 64px 0;font:600 30px Body;color:var(--k);background:#fff}
+.sb i{display:block;width:150px;height:44px;border-radius:30px;background:var(--k);position:absolute;left:50%;top:22px;transform:translateX(-50%)}
+.sb b{font:700 26px Body;letter-spacing:.06em}
+.hd{height:170px;border-bottom:2px solid #eee;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.av{width:84px;height:84px;border-radius:50%;background:var(--c);color:var(--y);font:700 34px Body;display:grid;place-items:center}
+.av.bz{background:var(--y)}
+.hd span{font:500 28px Body;color:var(--k)}
+.msgs{padding:30px 34px 0;display:flex;flex-direction:column;gap:14px}
+.m{max-width:560px;font:400 36px/1.32 Body;padding:22px 30px;border-radius:36px;transform-origin:0 100%}
+.m.r{align-self:flex-start;background:var(--grey);color:var(--k);border-bottom-left-radius:10px}
+.m.s{align-self:flex-end;background:var(--y);color:var(--k);border-bottom-right-radius:10px;transform-origin:100% 100%}
+.m.f{background:var(--k);color:var(--w);border:4px solid var(--y);font-weight:500}
+.m.pic{padding:10px;display:flex;gap:10px}
+.ty{align-self:flex-start;background:var(--grey);border-radius:36px;border-bottom-left-radius:10px;padding:26px 30px;display:flex;gap:12px}
+.ty u{display:block;width:16px;height:16px;border-radius:50%;background:#9a9a9a}
+.inp{position:absolute;left:34px;right:34px;bottom:44px;height:86px;border-radius:44px;border:2px solid #e3e3e3;font:400 30px Body;color:#aaa;display:flex;align-items:center;padding:0 34px;background:#fff}
+#dim{position:absolute;inset:0;background:var(--k);opacity:0}
+
+/* the invented supermarket website (748 px wide, drawn once and reused as screenshots) */
+.site{width:748px;background:var(--sc);color:#1b2a22;font-family:Body}
+.site .nav{height:96px;display:flex;align-items:center;gap:14px;padding:0 34px;border-bottom:1px solid #e7e4da;background:#fff}
+.site .nav .lf{width:46px;height:46px;border-radius:14px;background:var(--sg);display:grid;place-items:center;color:#fff;font:700 26px Body}
+.site .nav .bar{margin-left:auto;display:flex;gap:10px}.site .nav .bar u{display:block;width:34px;height:5px;border-radius:3px;background:#1b2a22}
+.site .nav .cart{width:54px;height:54px;border-radius:50%;background:var(--sg2);display:grid;place-items:center;font-size:28px}
+.site .hero{margin:24px 24px 0;border-radius:36px;background:var(--sg);color:#fff;padding:52px 44px 48px;position:relative;overflow:hidden}
+.site .hero:after{content:"";position:absolute;right:-80px;top:-60px;width:330px;height:330px;border-radius:50%;background:rgba(255,255,255,.08)}
+.site .hero small{font:500 22px Body;letter-spacing:.14em;color:#bfe3cc}
+.site .hero h1{font:700 60px/1.1 Body;margin:14px 0 18px;letter-spacing:-.01em}
+.site .hero p{font:400 28px/1.4 Body;color:#d9efe1;max-width:520px}
+.site .hero a{display:inline-block;margin-top:30px;background:var(--so);color:#fff;font:700 28px Body;padding:20px 40px;border-radius:999px}
+.site .hero .em{position:absolute;right:36px;bottom:30px;font-size:110px}
+.site .chips{display:flex;gap:14px;padding:30px 24px 6px;overflow:hidden}
+.site .chips span{flex:none;font:500 24px Body;padding:14px 26px;border-radius:999px;background:#fff;border:1px solid #e3e0d4}
+.site .chips span.on{background:#1b2a22;color:#fff;border-color:#1b2a22}
+.site h2{font:700 38px Body;margin:30px 34px 18px}
+.site .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:0 24px}
+.site .tile{background:#fff;border:1px solid #ebe8de;border-radius:28px;padding:22px}
+.site .tile .ph{height:170px;border-radius:20px;background:var(--sg2);display:grid;place-items:center;font-size:96px}
+.site .tile b{display:block;font:500 26px Body;margin:16px 0 4px}
+.site .tile s{text-decoration:none;font:700 28px Body;color:var(--sg)}
+.site .tile i{float:right;width:50px;height:50px;border-radius:50%;background:var(--so);color:#fff;font:700 34px/50px Body;text-align:center;font-style:normal;margin-top:-10px}
+.site .band{margin:28px 24px 40px;border-radius:30px;background:#fff1e6;color:#8a3d0b;padding:32px 36px;font:500 28px Body}
+.thumb{width:250px;height:440px;border-radius:24px;overflow:hidden;position:relative;background:var(--sc)}
+.thumb .site{position:absolute;left:0;top:0;transform-origin:0 0}
+</style></head>
+<body>
+<div id="stage">
+  <div id="dark"></div><div id="light"></div>
+
+  <!-- 1 the scroll -->
+  <div class="center" id="lbl" style="top:120px">Mama T's Supermarket, after closing.</div>
+  <div class="phone" id="ph0"><div class="scr">
+    <div class="sb"><span>11:47</span><i></i><b>5G</b></div>
+    <div id="sitewrap" style="position:absolute;left:0;top:96px;width:748px"></div>
+  </div></div>
+
+  <!-- 2 the idea -->
+  <div class="phone" id="ph1"><div class="scr">
+    <div class="sb"><span>11:52</span><i></i><b>5G</b></div>
+    <div class="hd"><div class="av">T</div><span>Tobi (Manager)</span></div>
+    <div class="msgs">
+      <div class="m s pic" id="a1"><div class="thumb" data-y="0"></div></div>
+      <div class="m s" id="a2">See this supermarket's website.</div>
+      <div class="ty" id="ty1"><u></u><u></u><u></u></div>
+      <div class="m r" id="a3">We need one of our own o.</div>
+      <div class="m s" id="a4">Who will even build it?</div>
+      <div class="ty" id="ty2"><u></u><u></u><u></u></div>
+      <div class="m r" id="a5">Ask Bliz Studio. They do websites.</div>
+    </div>
+    <div class="inp">Message</div>
+  </div></div>
+
+  <!-- 4 the enquiry -->
+  <div class="phone" id="ph2"><div class="scr">
+    <div class="sb"><span>9:05</span><i></i><b>5G</b></div>
+    <div class="hd"><div class="av bz"><img src="assets/bliz-icon-black.svg" style="width:52px" alt=""></div><span>Bliz Studio</span></div>
+    <div class="msgs">
+      <div class="m s" id="b1">Hello! We run Mama T's Supermarket.</div>
+      <div class="m s pic" id="b2"><div class="thumb" data-y="0" style="height:280px"></div><div class="thumb" data-y="660" style="height:280px"></div></div>
+      <div class="m s" id="b3">Can we get something like this?</div>
+      <div class="ty" id="ty3"><u></u><u></u><u></u></div>
+      <div class="m r f" id="b4">No wahala, we've got you covered.</div>
+      <div class="m r f" id="b5">Let's build one that's all yours.</div>
+    </div>
+    <div class="inp">Message</div>
+  </div></div>
+
+  <!-- cards -->
+  <div class="center card" id="c1" style="top:860px">So we asked.</div>
+  <div class="center card" id="c2" style="top:760px">Your business.<br><span style="color:var(--y)">Your website.</span></div>
+
+  <!-- end -->
+  <div class="center" id="lock" style="top:560px"><img src="assets/bliz-logo-primary.svg" style="width:640px" alt="Bliz Studio"></div>
+  <div class="center" id="tag" style="top:1120px">IDEAS. IN MOTION.</div>
+  <div class="center" id="ctaw" style="top:1240px"><span id="cta">DM CREATE to work with us</span></div>
+
+  <div id="dim"></div>
+</div>
+
+<template id="site-tpl">
+  <div class="site">
+    <div class="nav"><div class="lf">&#x1F33F;</div><div class="bar"><u></u></div><div class="cart">&#x1F6D2;</div></div>
+    <div class="hero"><small>FRESH EVERY DAY</small><h1>Groceries delivered to your door</h1>
+      <p>Fresh produce, drinks and household items, ordered in minutes.</p><a>Order now</a><div class="em">&#x1F96C;</div></div>
+    <div class="chips"><span class="on">All</span><span>Fruits</span><span>Drinks</span><span>Bakery</span><span>Household</span></div>
+    <h2>Today's picks</h2>
+    <div class="grid">
+      <div class="tile"><div class="ph">&#x1F345;</div><b>Fresh tomatoes, 1 kg</b><s>&#x20A6;1,800</s><i>+</i></div>
+      <div class="tile"><div class="ph">&#x1F35E;</div><b>Sliced bread</b><s>&#x20A6;1,500</s><i>+</i></div>
+      <div class="tile"><div class="ph">&#x1F95B;</div><b>Milk, 1 litre</b><s>&#x20A6;2,200</s><i>+</i></div>
+      <div class="tile"><div class="ph">&#x1F34C;</div><b>Bananas, bunch</b><s>&#x20A6;1,200</s><i>+</i></div>
+      <div class="tile"><div class="ph">&#x1F35A;</div><b>Rice, 5 kg</b><s>&#x20A6;9,500</s><i>+</i></div>
+      <div class="tile"><div class="ph">&#x1F9FC;</div><b>Liquid soap</b><s>&#x20A6;2,600</s><i>+</i></div>
+    </div>
+    <div class="band">Same-day delivery in your area. Pay on delivery or online.</div>
+  </div>
+</template>
+
+<script src="timeline.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const outC = p => 1 - Math.pow(1 - clamp(p), 3);
+const ioC = p => { p = clamp(p); return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; };
+const back = p => { p = clamp(p); const c = 2.2; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
+const win = (t, a, d) => clamp((t - a) / d);
+const S = Object.fromEntries(TL.scenes.map(s => [s.id, s]));
+
+// the website: once full size in the scroll scene, and as scaled screenshots in the chats
+const tpl = $('site-tpl').content;
+$('sitewrap').appendChild(tpl.cloneNode(true));
+document.querySelectorAll('.thumb').forEach(th => { const s = tpl.cloneNode(true).firstElementChild; s.style.transform = `scale(${250 / 748}) translateY(${-(+th.dataset.y)}px)`; th.appendChild(s); });
+window.ready = Promise.all([document.fonts.ready, ...[...document.images].map(im => im.decode().catch(() => {}))]);
+
+function vis(el, on) { el.style.visibility = on ? 'visible' : 'hidden'; }
+// soft text reveal like the reference: fade with blur and a small rise; out = fade and blur
+function soft(el, t, a, b, din = .6, dout = .4) {
+  const pi = win(t, a, din), po = win(t, b - dout, dout), on = t >= a && t < b; vis(el, on); if (!on) return;
+  el.style.opacity = outC(pi) * (1 - po); el.style.filter = 'none';                    // plain fade: blur read as focus pulling
+  el.style.transform = `translateY(${(1 - outC(pi)) * 24}px)`;
+}
+function chat(phone, events, t, s) {
+  // display, not visibility: children set visible would otherwise show through a hidden phone
+  const lt = t - s.t0, on = t >= s.t0 && t < s.t1; phone.style.display = on ? 'block' : 'none'; if (!on) return;
+  const e = outC(win(lt, 0, .5));                                   // phone rises and settles
+  phone.style.opacity = clamp(win(lt, 0, .12) * 2);
+  phone.style.transform = `translateY(${(1 - e) * 520}px)`;                            // slide up only, no scaling
+  phone.style.transformOrigin = '50% 50%';
+  events.forEach(ev => {
+    const el = $(ev.id);
+    if (ev.k === 'typing') {
+      const shown = t >= ev.t && t < ev.t1; el.style.display = shown ? 'flex' : 'none';
+      if (shown) [...el.children].forEach((u, i) => { const ph = (t - ev.t) * 7 - i * .9; u.style.transform = `translateY(${-Math.max(0, Math.sin(ph)) * 10}px)`; });
+    } else {
+      const p = win(t, ev.t, .34);
+      el.style.opacity = t >= ev.t ? clamp(p * 3) : 0; el.style.transform = `translateY(${(1 - outC(p)) * 26}px) scale(${lerp(.94, 1, outC(p))})`;
+    }
+  });
+}
+
+window.renderAt = function (t) {
+  t = clamp(t, 0, TL.dur - 1e-4);
+  const inChat = (t >= S.chat1.t0 && t < S.chat1.t1) || (t >= S.chat2.t0 && t < S.chat2.t1);
+  $('light').style.opacity = inChat ? (t < S.chat1.t1 ? win(t, S.chat1.t0, .3) : win(t, S.chat2.t0, .3)) : 0;
+
+  // 1 the scroll: on screen from the first frame, late-night label, a slow thumb-scroll down the site, then out
+  const p0 = $('ph0'), on0 = t < S.scroll.t1; p0.style.display = on0 ? 'block' : 'none'; vis($('lbl'), on0);
+  if (on0) {
+    const sm = TL.scrollMove, out = win(t, S.scroll.t1 - .35, .35);
+    $('sitewrap').style.transform = `translateY(${-ioC(win(t, sm.t0, sm.t1 - sm.t0)) * sm.px}px)`;
+    p0.style.opacity = 1 - out; p0.style.transform = 'none'; p0.style.filter = 'none';
+    $('lbl').style.opacity = clamp(1 - out * 1.5);
+  }
+
+  chat($('ph1'), TL.chat1, t, S.chat1); chat($('ph2'), TL.chat2, t, S.chat2);
+
+  // push-in towards Bliz's reply while the frame dims (reference 12.3-13.0 s)
+  const pu = TL.pushIn, pi = ioC(win(t, pu.t0, pu.t1 - pu.t0)), ph = $('ph2');
+  if (t >= pu.t0 && t < S.chat2.t1) {
+    const b = $(pu.target).getBoundingClientRect(), pr = ph.getBoundingClientRect();
+    ph.style.transformOrigin = `${(b.left + b.width / 2 - pr.left) / (pr.width / 780)}px ${(b.top + b.height / 2 - pr.top) / (pr.height / 1500)}px`;
+    ph.style.transform = `scale(${lerp(1, 1.25, pi)})`;
+  }
+  $('dim').style.opacity = t >= pu.t0 && t < S.chat2.t1 ? pi * .85 : 0;
+
+  soft($('c1'), t, S.card1.t0 + .05, S.card1.t1, .5, .35); soft($('c2'), t, S.card2.t0 + .05, S.card2.t1);
+
+  // end: lockup, tagline, then the one action
+  const L = $('lock'), G = $('tag'), C = $('ctaw');
+  soft(L, t, S.end.t0, TL.dur + 1, .6); soft(G, t, S.end.t0 + .45, TL.dur + 1, .5); soft(C, t, S.end.t0 + .9, TL.dur + 1, .45);
+  $('cta').style.transform = 'none';
+};
+window.ready.then(() => renderAt(+new URLSearchParams(location.search).get('t') || 0));
+</script>
+</body></html>
